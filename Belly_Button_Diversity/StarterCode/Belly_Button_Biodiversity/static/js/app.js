@@ -1,29 +1,72 @@
 function buildMetadata(sample) {
-
   // @TODO: Complete the following function that builds the metadata panel
 
   // Use `d3.json` to fetch the metadata for a sample
-    // Use d3 to select the panel with id of `#sample-metadata`
-
+  let metadataURL = `/metadata/${sample}`;
+  // Use d3 to select the panel with id of `#sample-metadata`
+  d3.json(metadataURL).then(function(sample) {
+    let sampleData = d3.select("#sample-metadata");
     // Use `.html("") to clear any existing metadata
-
+    sampleData.html("");
     // Use `Object.entries` to add each key and value pair to the panel
     // Hint: Inside the loop, you will need to use d3 to append new
     // tags for each key-value in the metadata.
-
+    Object.entries(sample).forEach(function([key, value]) {
+      let row = sampleData.append("p");
+      row.text(`${key}:${value}`);
+    });
     // BONUS: Build the Gauge Chart
     // buildGauge(data.WFREQ);
+  });
 }
 
 function buildCharts(sample) {
-
   // @TODO: Use `d3.json` to fetch the sample data for the plots
+  let plotData = `/samples/${sample}`;
+  // @TODO: Build a Bubble Chart using the sample data
+  d3.json(plotData).then(function(dataOne) {
+    let x_axis = dataOne.otu_ids;
+    let y_axis = dataOne.sample_values;
+    let size = dataOne.sample_values;
+    let color = dataOne.otu_ids;
+    let texts = dataOne.otu_labels;
 
-    // @TODO: Build a Bubble Chart using the sample data
+    let bubble = {
+      x: x_axis,
+      y: y_axis,
+      text: texts,
+      mode: "markers",
+      marker: {
+        size: size,
+        color: color
+      }
+    };
+    let chart = [bubble];
+    let layout = {
+      title: "Belly Button Bacteria Bubble Chart",
+      xaxis: { title: "OTU ID" }
+    };
+    Plotly.newPlot("bubble", chart, layout);
 
     // @TODO: Build a Pie Chart
+    d3.json(plotData).then(function(dataTwo) {
+      let values = dataTwo.sample_values.slice(0, 10);
+      let labels = dataTwo.otu_ids.slice(0, 10);
+      let displays = dataTwo.otu_labels.slice(0, 10);
+
+      let pieChart = [
+        {
+          values: values,
+          labels: labels,
+          hovertext: displays,
+          type: "pie"
+        }
+      ];
+      Plotly.newPlot("pie", pieChart);
+    });
     // HINT: You will need to use slice() to grab the top 10 sample_values,
     // otu_ids, and labels (10 each).
+  });
 }
 
 function init() {
@@ -31,8 +74,8 @@ function init() {
   var selector = d3.select("#selDataset");
 
   // Use the list of sample names to populate the select options
-  d3.json("/names").then((sampleNames) => {
-    sampleNames.forEach((sample) => {
+  d3.json("/names").then(sampleNames => {
+    sampleNames.forEach(sample => {
       selector
         .append("option")
         .text(sample)
